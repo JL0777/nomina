@@ -52,7 +52,7 @@ const Dashboard = () => {
     ];
 
     return (
-        <div className="max-w-[1600px] mx-auto py-12 px-6">
+        <div className="max-w-400 mx-auto py-12 px-6">
             {/* Encabezado */}
             <div className="mb-12 text-center md:text-left">
                 <h1 className="text-5xl font-black text-slate-900 mb-3 tracking-tight">

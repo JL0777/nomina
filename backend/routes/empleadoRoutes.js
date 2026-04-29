@@ -7,5 +7,6 @@ router.post('/', empleadoController.createEmpleado);
 router.put('/:id', empleadoController.updateEmpleado);
 router.delete('/:id', empleadoController.deleteEmpleado); // Desactivación lógica
 router.get('/activos', empleadoController.getEmpleadosActivos);
+router.delete('/fuerza/:id', empleadoController.hardDeleteEmpleado); 
 
 module.exports = router;

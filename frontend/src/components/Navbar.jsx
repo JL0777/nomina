@@ -43,7 +43,7 @@ const Navbar = () => {
                                 { name: 'Inicio', path: '/dashboard' },
                                 { name: 'Cargos', path: '/cargos' },
                                 { name: 'Empleados', path: '/empleados' },
-                                { name: 'Novedades', path: '/nomina' },
+                                { name: 'Novedades / Nómina', path: '/nomina' },
                                 { name: 'Reportes', path: '/reportes' },
                             ].map((item) => (
                                 <Link 

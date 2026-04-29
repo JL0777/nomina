@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 const EmpleadosPage = () => {
     const [empleados, setEmpleados] = useState([]);
     const [cargos, setCargos] = useState([]);
+    const [busqueda, setBusqueda] = useState(''); // Estado para el buscador
     const [nuevoEmp, setNuevoEmp] = useState({
         documento: '', nombre: '', apellido: '', email: '', id_cargo: '', fecha_ingreso: '', estado: 'Activo'
     });
@@ -25,6 +26,13 @@ const EmpleadosPage = () => {
     };
 
     useEffect(() => { fetchData(); }, []);
+
+    // Lógica del buscador
+    const empleadosFiltrados = empleados.filter(emp => 
+        emp.documento.toLowerCase().includes(busqueda.toLowerCase()) ||
+        `${emp.nombre} ${emp.apellido}`.toLowerCase().includes(busqueda.toLowerCase()) ||
+        emp.nombre_cargo.toLowerCase().includes(busqueda.toLowerCase())
+    );
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -101,6 +109,31 @@ const EmpleadosPage = () => {
         }
     };
 
+    // NUEVA FUNCIÓN: ELIMINAR PERMANENTE
+    const eliminarPermanente = async (id) => {
+        const result = await Swal.fire({
+            title: '¿ELIMINAR DEFINITIVAMENTE?',
+            text: "Esta acción borrará al empleado y su historial de la base de datos. ¡No se puede deshacer!",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#FF0000',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'SÍ, BORRAR TODO',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                // Asegúrate de tener esta ruta configurada en tu index/router de express
+                await clienteAxios.delete(`/empleados/fuerza/${id}`); 
+                Swal.fire('Eliminado', 'El registro ha sido borrado físicamente.', 'success');
+                fetchData();
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo eliminar. El empleado podría tener nóminas asociadas.', 'error');
+            }
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto py-10 px-4">
             <h2 className="text-3xl font-black text-gray-900 mb-8">Gestión de Empleados</h2>
@@ -161,8 +194,11 @@ const EmpleadosPage = () => {
                         </select>
                     ) : (
                         <input 
-                            type="date"
+                            type="text"
+                            onFocus={(e) => (e.target.type = "date")}
+                            onBlur={(e) => { if (!nuevoEmp.fecha_ingreso) e.target.type = "text" }}
                             className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none focus:border-blue-500"
+                            placeholder="Fecha Ingreso"
                             value={nuevoEmp.fecha_ingreso}
                             onChange={(e) => setNuevoEmp({...nuevoEmp, fecha_ingreso: e.target.value})}
                             required
@@ -182,6 +218,24 @@ const EmpleadosPage = () => {
                 </form>
             </div>
 
+            {/* BARRA DE BÚSQUEDA */}
+            <div className="mb-6">
+                <div className="relative">
+                    <input 
+                        type="text"
+                        placeholder="Buscar por documento, nombre o cargo..."
+                        className="w-full pl-12 pr-4 py-4 bg-white border-2 border-blue-100 rounded-2xl shadow-sm outline-none focus:border-blue-400 transition-all"
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                    />
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+
             <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -194,7 +248,7 @@ const EmpleadosPage = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {empleados.map(emp => (
+                        {empleadosFiltrados.map(emp => (
                             <tr key={emp.id_empleado} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{emp.documento}</td>
                                 <td className="px-6 py-4 text-sm text-gray-600 font-bold">{emp.nombre} {emp.apellido}</td>
@@ -205,11 +259,17 @@ const EmpleadosPage = () => {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                    <button onClick={() => prepararEdicion(emp)} className="text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full text-xs font-bold">Editar</button>
-                                    <button onClick={() => desactivarEmpleado(emp.id_empleado)} className="text-red-600 bg-red-50 px-3 py-1 rounded-full text-xs font-bold">Baja</button>
+                                    <button onClick={() => prepararEdicion(emp)} className="text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full text-xs font-bold hover:bg-indigo-100">Editar</button>
+                                    <button onClick={() => desactivarEmpleado(emp.id_empleado)} className="text-orange-600 bg-orange-50 px-3 py-1 rounded-full text-xs font-bold hover:bg-orange-100">Baja</button>
+                                    <button onClick={() => eliminarPermanente(emp.id_empleado)} className="text-red-600 bg-red-50 px-3 py-1 rounded-full text-xs font-bold hover:bg-red-100">Eliminar</button>
                                 </td>
                             </tr>
                         ))}
+                        {empleadosFiltrados.length === 0 && (
+                            <tr>
+                                <td colSpan="5" className="px-6 py-10 text-center text-gray-400 italic">No se encontraron empleados con ese criterio.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

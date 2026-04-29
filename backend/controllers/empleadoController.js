@@ -58,8 +58,6 @@ exports.deleteEmpleado = async (req, res) => {
     }
 };
 
-// ... (Tus funciones getEmpleados, createEmpleado, etc., se quedan intactas)
-
 // Nueva función específica para el select de novedades
 exports.getEmpleadosActivos = async (req, res) => {
     try {
@@ -72,5 +70,17 @@ exports.getEmpleadosActivos = async (req, res) => {
         res.json(empleados);
     } catch (error) {
         res.status(500).json({ error: 'Error obteniendo los empleados activos' });
+    }
+};
+
+// ELIMINACIÓN FÍSICA (REQUERIMIENTO EXTREMO)
+exports.hardDeleteEmpleado = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [result] = await db.query("DELETE FROM empleados WHERE id_empleado = ?", [id]);
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Empleado no encontrado' });
+        res.json({ message: 'Empleado eliminado permanentemente del sistema' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar el registro. Es posible que tenga historial vinculado.' });
     }
 };
